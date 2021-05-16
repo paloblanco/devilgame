@@ -138,6 +138,13 @@ function actor:zone_check()
 	if (self.y < self.myzone.y0) self:assign_zone(self.myzone:get_near())
 end
 
+function actor:bounceoffwalls()
+	if (self.bumpwall == 0) self.dx = self.speed
+	if (self.bumpwall == 1) self.dx = -self.speed
+	if (self.bumpwall == 2) self.dy = -self.speed
+	if (self.bumpwall == 3) self.dy = self.speed
+end
+
 function actor:_move()
 	if abs(self.dx)+abs(self.dy)>0 then
 	 if (not self.spinning) self.angle =atan2(self.dx,-self.dy)
@@ -363,7 +370,7 @@ end
 function draw_hud()
 	color(7)
 	print("cpu: "..flr(100*stat(1)),1,1)
-	print("camz targ: "..mid_target,1,7)
+	print(player.bumpwall,1,7)
 	print("mem: "..flr(100*stat(2)),1,13)
 	print("lev: "..level_now,1,19)
 	color()
@@ -886,8 +893,7 @@ function badguy:update()
 		self.dx=0
 		self.dy=0
 	end
-	if (self.bumpwall == 0 or self.bumpwall == 1) self.dx *= -1
-	if (self.bumpwall == 2 or self.bumpwall == 3) self.dy *= -1
+	self:bounceoffwalls()
 	self.timer += -1
 	self:_move()
 end
@@ -911,6 +917,16 @@ function badguy:bump_me(other)
 		freeze=20
 	end
 end
+
+sentrylr = badguy:new()
+sentrylr.dx = sentrylr.speed
+
+function sentrylr:update()
+	self:bounceoffwalls()
+	self:_move()
+end
+
+
 
 spinner = actor:new()
 spinner.zup=0.5
@@ -1184,7 +1200,7 @@ function level:make_badguys()
 			xx = 0.5+flr(z.dx*rnd()) + z.x0
 			yy = 0.5+flr(z.dy*rnd()) + z.y0
 			zz = z.z0
-			local b = badguy:new({x=xx,y=yy,z=zz})
+			local b = sentrylr:new({x=xx,y=yy,z=zz})
 			b:assign_zone(z)
 			z.baddies+=1
 	end
