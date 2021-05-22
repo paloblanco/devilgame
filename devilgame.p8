@@ -253,6 +253,10 @@ function actor:assign_zone(z)
 	for c in all(self.children) do
 		c:assign_zone(z)
 	end
+	self:zone_special(z)
+end
+
+function actor:zone_special(z)
 end
 
 function actor:draw()
@@ -345,6 +349,7 @@ end
 function init_level(levelnum)
  lev = 0
  lev = level:new()
+ lev:init_arg(level1)
 	function level_update()
 		lev:update()
 	end
@@ -396,6 +401,8 @@ function p1:init()
  add(self.children,rarm)
  larm = leftarm:new({parent=self})
  add(self.children,larm)
+ -- declare to global scope
+ player = self
 end
 
 function p1:update()
@@ -841,6 +848,10 @@ function coin:update()
 	self.sp = coin_sprites[ix]
 end
 
+function coin:zone_special(z)
+	z.coins += 1
+end
+
 portal = actor:new()
 portal.sp=12
 portal.shadow=true
@@ -921,6 +932,10 @@ function badguy:bump_me(other)
 		other.hurt=20
 		freeze=20
 	end
+end
+
+function badguy:zone_special(z)
+	z.baddies+=1
 end
 
 sentrylr = badguy:new()
@@ -1050,6 +1065,11 @@ function key:update()
 	ix = flr((self.cycle/15)*4)+1
 	self.sp = key_sprites[ix]
 end
+
+function key:zone_special(z)
+	z:lock_me()
+	z.keys+=1
+end
 -->8
 -- globals for levels
 dwalls=true --are we drawing walls?
@@ -1066,7 +1086,7 @@ level.c3=13
 level.zonelist={}
 level.zones={}
 
-function level:init()
+function level:init_rand()
 	--self:make_zones()
 	self:random_zones()
 	self:make_zonelist()
@@ -1075,6 +1095,47 @@ function level:init()
 	self:make_badguys()
 	self:make_exit()
 	self:make_locks()
+end
+
+function level:init_arg(ll)
+	self.zones={}
+	for zl in all(ll) do
+		self:add_to_zones(zl)
+	end
+	self:make_zonelist()
+	for iz,zl in pairs(ll) do
+		for al in all(zl[2]) do
+			self:add_actor(al,iz)
+		end
+	end
+end
+
+function level:add_actor(al,iz)
+	myzone=self.zonelist[iz]
+	myact=acreator[al[1]]
+	myinst=myact:new({x=al[2]+0.5,
+		y=al[3]+0.5,
+		z=al[4]})
+	myinst:assign_zone(myzone)
+end
+
+function level:add_to_zones(zl)
+	lenzones = #self.zones
+	if lenzones > 0 then
+		last = self.zones[lenzones]
+		xold = last.x0
+		yold = last.y1
+		zold = last.z0
+	else
+		xold = 0
+		yold = 0
+		zold = 0
+	end
+	newzone = {zold+ll[1],yold,zold+ll[2],
+		xold+ll[1]+ll[3],
+		yold+ll[4],
+		zold+ll[2]+ll[5]}
+	add(self.zones,newzone)
 end
 
 function level:random_zones()
@@ -1184,7 +1245,7 @@ function level:make_coins()
 			zz = flr(3*rnd()) + z.z0
 			local c = coin:new({x=xx,y=yy,z=zz})
 			c:assign_zone(z)
-			z.coins += 1
+			--z.coins += 1
 		end
 	end
 end
@@ -1193,14 +1254,14 @@ function level:make_locks()
 	-- randomly lock rooms
 	for z in all(self.zonelist) do
 		if (rnd() > 0.5 and z:get_far()) then
-			z:lock_me()
+			--z:lock_me()
 			--z.lock=true
 			xx = 0.5+flr(z.dx*rnd()) + z.x0
 			yy = 0.5+flr(z.dy*rnd()) + z.y0
 			zz = flr(3*rnd()) + z.z0
 			local k = key:new({x=xx,y=yy,z=zz})
 			k:assign_zone(z)
-			z.keys += 1
+			--z.keys += 1
 		end
 	end
 end
@@ -1213,7 +1274,7 @@ function level:make_badguys()
 			zz = z.z0
 			local b = sentrylr:new({x=xx,y=yy,z=zz})
 			b:assign_zone(z)
-			z.baddies+=1
+			--z.baddies+=1
 	end
 end
 
@@ -1363,6 +1424,15 @@ nkey = 3
 nsentrylr = 4
 nsentryud = 5
 nportal = 6
+
+acreator={}
+acreator[nhero]=p1
+acreator[ncoin]=coin
+acreator[nkey]=key
+acreator[nsentrylr] = sentrylr
+acreator[nsentryud] = sentryud
+acreator[nportal] = portal
+
 
 #include level1.lua
 
