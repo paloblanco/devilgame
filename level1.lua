@@ -35,6 +35,7 @@ zone3 = {}
 layout3 = {-3,-2,9,7,7}
 a3 = {
     {nkey,4,3,2},
+    {nkey,5,3,2},
 }
 add(zone3,layout3)
 add(zone3,a3)

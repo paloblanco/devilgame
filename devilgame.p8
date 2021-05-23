@@ -1099,8 +1099,9 @@ end
 
 function level:init_arg(ll)
 	self.zones={}
+	print(#ll)
 	for zl in all(ll) do
-		self:add_to_zones(zl)
+		self:add_to_zones(zl[1])
 	end
 	self:make_zonelist()
 	for iz,zl in pairs(ll) do
@@ -1113,9 +1114,9 @@ end
 function level:add_actor(al,iz)
 	myzone=self.zonelist[iz]
 	myact=acreator[al[1]]
-	myinst=myact:new({x=al[2]+0.5,
-		y=al[3]+0.5,
-		z=al[4]})
+	myinst=myact:new({x=al[2]+0.5+myzone.x0,
+		y=al[3]+0.5+myzone.y0,
+		z=al[4]+myzone.z0})
 	myinst:assign_zone(myzone)
 end
 
@@ -1131,10 +1132,12 @@ function level:add_to_zones(zl)
 		yold = 0
 		zold = 0
 	end
-	newzone = {zold+ll[1],yold,zold+ll[2],
-		xold+ll[1]+ll[3],
-		yold+ll[4],
-		zold+ll[2]+ll[5]}
+	newzone = {x0=xold+zl[1],
+		y0=yold,
+		z0=zold+zl[2],
+		x1=xold+zl[1]+zl[3],
+		y1=yold+zl[4],
+		z1=zold+zl[2]+zl[5]}
 	add(self.zones,newzone)
 end
 
