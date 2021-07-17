@@ -1437,39 +1437,7 @@ acreator[nsentrylr] = sentrylr
 acreator[nsentryud] = sentryud
 acreator[nportal] = portal
 
-
-#include level1.lua
-
 mstart=0x2000
-
-function to_mem(lt)
-	vals = to_bytes(lt)
-	address = mstart
-	for val in all(vals) do
-		poke(address,val)
-		address+=1
-	end
-	cstore()
-end
-
-
-function to_bytes(lt)
- values={}
- for zz in all(lt) do
- 	for each in all(zz[1]) do
- 		add(values,each+100)
- 	end
- 	for eacha in all(zz[2]) do
- 		for aa in all(eacha) do
- 			add(values,aa+100)
- 		end
- 	end
- 	add(values,254)
- end
- add(values,255)
- return values
-end
-
 
 function level_from_mem(addr)
 	address=addr
@@ -1520,6 +1488,22 @@ function add_act_from_mem(alist,address)
 		add(actt,val)
 	end
 	add(alist,actt)
+end
+
+function return_level_start_addresses()
+	level_addresses = {}
+	add(level_addresses,mstart)
+	current_address = mstart + 1
+	while current_address < 0x3000 do
+		if peek(current_address == 255) then
+			current_address += 1
+			add(level_addresses,current_address)
+		else
+			current_address += 1
+		end
+	end
+	del(level_addresses,level_addresses[#level_addresses])
+	return level_addresses
 end
 
 __gfx__
