@@ -868,6 +868,14 @@ function portal:bump_me(other)
 	end
 end
 
+flag = actor:new()
+flag.sp=12
+flag.shadow=true
+
+function flag:bump_me(other)
+
+end
+
 badguy = actor:new()
 badguy.sp=32
 badguy.shadow=true
@@ -1430,6 +1438,7 @@ nkey = 3
 nsentrylr = 4
 nsentryud = 5
 nportal = 6
+nflag = 7
 
 acreator={}
 acreator[nhero]=p1
@@ -1438,6 +1447,7 @@ acreator[nkey]=key
 acreator[nsentrylr] = sentrylr
 acreator[nsentryud] = sentryud
 acreator[nportal] = portal
+acreator[flag] = flag
 
 mstart=0x2000
 
