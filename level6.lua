@@ -6,7 +6,7 @@ nsentryud = 5
 nportal = 6
 
 
-function make_level1()
+function make_level6()
 
 level1 = {}
 

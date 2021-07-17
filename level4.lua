@@ -5,9 +5,7 @@ nsentrylr = 4
 nsentryud = 5
 nportal = 6
 
-
-function make_level1()
-
+function make_level4()
 level1 = {}
 
 zone1 = {}
