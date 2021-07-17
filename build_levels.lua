@@ -41,12 +41,6 @@ function export_to_devil_cart()
 end
 
 function put_all_levels_into_mem()
-    #include level1.lua
-    #include level2.lua
-    #include level3.lua
-    #include level4.lua
-    #include level5.lua
-    #include level6.lua
     current_write_address = mem_start
     level_function_list = {make_level1,make_level2,make_level3,make_level4,make_level5,make_level6}
     for level_func in all(level_function_list) do
@@ -58,3 +52,5 @@ end
 
 -- main function:
 put_all_levels_into_mem()
+used_mem = 0x3000 - current_write_address
+print("map used: "..(1 - used_mem/0x1000))

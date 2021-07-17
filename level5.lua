@@ -17,6 +17,12 @@ a1 = {
     {ncoin,3,3,1},
     {ncoin,4,3,1},
     {ncoin,5,3,1},
+    {ncoin,3,4,1},
+    {ncoin,4,4,1},
+    {ncoin,5,4,1},
+    {ncoin,3,3,2},
+    {ncoin,4,3,2},
+    {ncoin,5,3,2},
     {nsentrylr,3,5,0}
 }
 add(zone1,layout1)
