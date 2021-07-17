@@ -342,6 +342,7 @@ function init_globals()
 	level_max=6
 	level_now=1
 	health=5
+	level_address_list = return_level_start_addresses()
 end
 
 -- level mode
@@ -349,6 +350,7 @@ end
 function init_level(levelnum)
  lev = 0
  lev = level:new()
+ address_load = level_address_list[levelnum]
  level_mem = level_from_mem(mstart)
  lev:init_arg(level_mem)
 	function level_update()
@@ -1378,6 +1380,7 @@ end
 
 function init_transition()
 	t = transition:new()
+	level_now+=1
 	function t_update()
 		t:update()
 	end
