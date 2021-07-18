@@ -9,6 +9,7 @@ nsentrylr = 4
 nsentryud = 5
 nportal = 6
 nflag = 7
+nspikes = 8
 
 
 function add_zone(layout,actorinfo,destination)
@@ -69,6 +70,36 @@ a10 = {
     {nflag,1,2,0} -- nactor,dx,dy,dz
 }
 add_zone(l10,a10,level1)
+
+l11 = {-1,-2,5,9,6}
+a11 = {
+    {nsentrylr,0,5,0},
+    {nsentrylr,4,6,0},
+    {nsentrylr,0,7,0},
+    {nkey,2,6,2}
+}
+add_zone(l11,a11,level1)
+
+l12 = {1,1,3,4,3}
+add_zone(l12,{},level1)
+
+l13 = {0,0,4,3,6}
+add_zone(l13,{},level1)
+
+l14 = {0,-1,4,2,7}
+a14 = {
+    {nspikes,0,0,0}
+}
+add_zone(l14,a14,level1)
+
+l15 = {0,1,4,2,6}
+add_zone(l15,{},level1)
+
+--16 is same as 14
+add_zone(l14,a14,level1)
+
+l17 = {0,1,4,3,6}
+add_zone(l17,{},level1)
 
 return level1
 end
