@@ -869,7 +869,7 @@ end
 spikes = actor:new()
 spikes.sp=75
 spikes.pix=8
-spikes.shadow=true
+spikes.shadow=false
 
 function spikes:bump_me(other)
 	if other.blink <= 0 then
@@ -895,20 +895,23 @@ end
 
 balloon = actor:new()
 balloon.sp=90
+balloon.pix=8
 balloon.shadow=true
+balloon.timer2=0
 
 function balloon:update()
 	self.drawme=true
-	if (self.hurt > 0) self.drawme=false
+	if (self.timer2 > 0) self.drawme=false
 	self.timer = (self.timer+1)%60
-	self.zup = 0.3*sin(self.timer/60)
+	self.zup = 0.2*sin(self.timer/60)
+	self.timer2 = max(self.timer2-1,0)
 end
 
 function balloon:bump_me(other)
-	if other.spinning or other.ball then
+	if self.timer2 <= 0 and (other.spinning or other.ball) then
 		local e = explosion:new({x=self.x,y=self.y,z=self.z})
 		e:assign_zone(self.myzone)
-		self.hurt=60
+		self.timer2=60
 		if other.ball then
 		 other.dz=0.5*other.jump
 		 other.airjump=true
