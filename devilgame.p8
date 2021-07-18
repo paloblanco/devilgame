@@ -108,6 +108,13 @@ end
 function actor:bump_me(other)
 end
 
+function actor:hurt_me()
+	if self.blink <= 0 then
+		self.blink=60
+		self.hurt=20
+		freeze=20
+	end
+end
 
 function actor:bump_check()
 	for a in all(self.myzone.actors) do
@@ -318,6 +325,8 @@ function actor:_drawself()
 	self.py = ypix
 	self.pw = s0*self.size*0.5
 end
+
+
 
 -->8
 -- game loop and logic
@@ -870,27 +879,36 @@ spikes = actor:new()
 spikes.sp=75
 spikes.pix=8
 spikes.shadow=false
+spikes.hcount=1
 
 function spikes:bump_me(other)
-	if other.blink <= 0 then
-		other.blink=60
-		other.hurt=20
-		freeze=20
+	other:hurt_me()
+end
+
+function spikes:zone_special(z)
+ self.hcount=z.x1+0.5-self.x
+ if self.y+1 < z.y1 then
+		ss = spikes:new({x=self.x,y=self.y+1,z=self.z})
+		ss:assign_zone(z)
 	end
 end
 
-function spikes:update()
- if not self.ball then
- 	if self.x+1 < self.myzone.x1 then
- 		ss = spikes:new({x=self.x+1,y=self.y,z=self.z})
- 		ss:assign_zone(self.myzone)
- 	end
- 	if self.y+1 < self.myzone.y1 then
- 		ss = spikes:new({x=self.x,y=self.y+1,z=self.z})
- 		ss:assign_zone(self.myzone)
- 	end
- 	self.ball = true
- end
+function spikes:draw()
+	local xp0,yp0,s0 = point2pix(self.x,self.y+self.yup,self.z+self.zup)
+	local xpix=xp0-s0*0.5*self.size+0.5+self.xpadd
+	local ypix=yp0-s0*self.size+self.ypadd
+	
+	for xoff=1,self.hcount,1 do
+		sspr((self.sp%16)*8,
+	     flr(self.sp/16)*8,
+	     self.pix,self.pix,
+	     xpix+(s0*(xoff-1)),ypix,
+	     s0*self.size,s0*self.size,
+	     self.flipme)
+	end
+	self.px = xpix
+	self.py = ypix
+	self.pw = s0*self.size*0.5
 end
 
 balloon = actor:new()
@@ -963,8 +981,8 @@ function badguy:update()
 		self.dx=0
 		self.dy=0
 	end
-	if (self.y+self.dy < self.myzone.y0) self.bumpwall=3
-	if (self.y+self.dy > self.myzone.y1) self.bumpwall=2
+	if (self.y-0.6+self.dy < self.myzone.y0) self.bumpwall=3
+	if (self.y+0.6+self.dy > self.myzone.y1) self.bumpwall=2
 	self:bounceoffwalls()
 	self.timer += -1
 	self:_move()
@@ -983,10 +1001,8 @@ function badguy:bump_me(other)
 		 other.dz=0.5*other.jump
 		 other.airjump=true
 		end
-	elseif other.blink <= 0 then
-		other.blink=60
-		other.hurt=20
-		freeze=20
+	else
+		other:hurt_me()
 	end
 end
 
@@ -999,6 +1015,8 @@ sentrylr.speed*=1.5
 sentrylr.dx = sentrylr.speed
 
 function sentrylr:update()
+	if (self.y-0.6+self.dy < self.myzone.y0) self.bumpwall=3
+	if (self.y+0.6+self.dy > self.myzone.y1) self.bumpwall=2
 	self:bounceoffwalls()
 	self:_move()
 end
