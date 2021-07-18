@@ -10,7 +10,8 @@ nsentryud = 5
 nportal = 6
 nflag = 7
 nspikes = 8
-
+nballoon = 9
+nsentrydr = 10
 
 function add_zone(layout,actorinfo,destination)
     local zz = {}
@@ -100,6 +101,85 @@ add_zone(l14,a14,level1)
 
 l17 = {0,1,4,3,6}
 add_zone(l17,{},level1)
+
+--l18
+add_zone({0,0,3,3,3},{},level1)
+add_zone({-4,0,7,3,3},{},level1)
+add_zone({0,0,3,2,3},{},level1)
+add_zone({0,0,7,3,3},{},level1)
+add_zone({4,0,3,3,3},{{nflag,1,1,0}},level1) -- flag before balloon climb
+add_zone({-2,0,6,3,20},{{nballoon,3,2,2}},level1) -- first balloon
+
+l30 = {2,3,4,3,17}
+a30 = {
+    {nballoon,1,2,2},
+    {nballoon,2,2,4},
+    {nballoon,3,2,5}
+}
+add_zone(l30,a30,level1)
+
+l31 = {0,6,4,3,11}
+a31 = {
+    {nballoon,1,2,2},
+    {nballoon,3,2,4},
+    {nkey,2,2,5},
+    {nballoon,1,2,5},
+    {nflag,2,1,0}
+}
+add_zone(l31,a31,level1)
+
+l32 = {0,8,8,3,5}
+a32 = {
+    {nsentryud,3,2,0},
+    {nsentryud,4,0,0},
+    {nsentryud,5,2,0},
+    {nkey,7,0,0}
+}
+add_zone(l32,a32,level1)
+
+add_zone({4,1,3,4,3},{{nflag,1,2,0}},level1)
+add_zone({-5,0,8,3,3},{},level1)
+add_zone({-1,0,5,3,5},{},level1)
+add_zone({0,-1,5,2,6},{{nspikes,0,0,0}},level1)
+add_zone({0,1,5,2,5},{},level1)
+add_zone({1,-10,3,2,15},{},level1)
+add_zone({0,0,3,4,3},{{nflag,1,2,0}},level1)
+
+l40={-2,-1,7,5,8}
+a40 = {
+    {nsentrylr,0,3,0},
+    {nsentrylr,6,4,0}
+}
+add_zone(l40,a40,level1)
+
+l41={0,-1,7,4,9}
+a41 = {
+    {nspikes,0,0,0},
+    {nballoon,2,3,2},
+    {nballoon,3,3,2},
+    {nballoon,4,3,2},
+}
+add_zone(l41,a41,level1)
+
+l42 = {0,1,7,7,8}
+a42 = {
+    {nsentrydr,1,5,0},
+    {nsentrydr,2,4,0},
+    {nsentrydr,3,3,0},
+    {nsentrydr,4,2,0},
+    {nsentrydr,5,1,0},
+    {nballoon,0,2,2},
+    {nkey,0,4,4},
+    {nkey,6,5,0}
+}
+
+add_zone(l42,a42,level1)
+
+add_zone({2,1,3,7,3},{},level1)
+add_zone({-1,-1,5,5,10},{},level1)
+add_zone({0,1,5,1,9},{},level1)
+add_zone({0,1,5,1,8},{},level1)
+add_zone({0,1,5,5,7},{{nportal,2,3,0}},level1)
 
 return level1
 end
