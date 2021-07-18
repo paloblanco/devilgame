@@ -1176,6 +1176,7 @@ function level:init_rand()
 	self:make_locks()
 end
 
+-- need this
 function level:init_arg(ll)
 	self.zones={}
 	print(#ll)
@@ -1190,6 +1191,7 @@ function level:init_arg(ll)
 	end
 end
 
+--needed
 function level:add_actor(al,iz)
 	myzone=self.zonelist[iz]
 	myact=acreator[al[1]]
@@ -1220,80 +1222,8 @@ function level:add_to_zones(zl)
 	add(self.zones,newzone)
 end
 
-function level:random_zones()
-	z0 = {
-	x0=-3,y0=-6,z0=2,x1=11,y1=0,z1=11
-	}
-	self.zones={z0}
-	for i=1,2+level_now,1 do
-		self:append_tunnel()
-		self:append_arena()
-	end
-	self:append_endroom()
-end
 
-function level:append_endroom()
-	self:append_tunnel()
-	self:append_arena()
-end
 
-function level:append_arena()
-	zl=self.zones[#self.zones]
-	zs=-3+flr(rnd(5))
-	dz=5+flr(rnd(3))
-	dx=5+flr(rnd(5))
-	dy=4+flr(rnd(5))
-	xs=-dx+1+flr(rnd(dx))
-	zadd={x0=zl.x0+xs,
-	y0=zl.y1,
-	z0=zl.z0+zs,
-	x1=zl.x0+xs+dx,
-	y1=zl.y1+dy,
-	z1=zl.z0+zs+dz}
-	add(self.zones,zadd)
-end
-
-function level:append_tunnel()
-	zl=self.zones[#self.zones]
-	dxl = zl.x1-zl.x0
-	-- tunnel 1
-	xs=flr(rnd(dxl-2))
-	zs=flr(rnd(2))
-	yf=3+flr(rnd(8))
-	zadd={x0=zl.x0+xs,
-	y0=zl.y1,
-	z0=zl.z0+zs,
-	x1=zl.x0+xs+3,
-	y1=zl.y1+yf,
-	z1=zl.z0+zs+3}
-	add(self.zones,zadd)	
-end
-
-function level:make_zones()
-	z0 = {
-	x0=-3,y0=-6,z0=0,x1=11,y1=0,z1=9
-	}
-	z1 = {
-	x0=0,y0=0,z0=0,x1=8,y1=4,z1=8
-	}
-	z2 = {
-	x0=1,y0=4,z0=2,x1=7,y1=8,z1=6
-	}
-	z3 = {
-	x0=0,y0=8,z0=0,x1=8,y1=12,z1=8
-	}
-	z4 = {
-	x0=3,y0=12,z0=0,x1=8,y1=14,z1=8
-	}
-	z5 = {
-	x0=0,y0=14,z0=0,x1=8,y1=20,z1=8
-	}
-	z6 = {
-	x0=3,y0=20,z0=0,x1=16,y1=24,z1=8
-	}
-	self.zones={}
-	self.zones = {z0,z1,z2,z3,z4,z5,z6}	
-end
 
 function level:make_zonelist()
 	self.zonelist={}
@@ -1308,66 +1238,8 @@ function level:make_zonelist()
 	end
 end
 
-function level:make_player()
-	z0 = self.zonelist[1]
-	-- player is being 
-	-- declared globally
-	px = (z0.x0+z0.x1)/2
-	py = z0.y0+1
-	player = p1:new({x=px,y=py,z=z0.z})
-	player:assign_zone(self.zonelist[1])
-end
-
-function level:make_coins()
-	-- make some coins
-	for z in all(self.zonelist) do
-		for i=1,4,1 do
-			xx = 0.5+flr(z.dx*rnd()) + z.x0
-			yy = 0.5+flr(z.dy*rnd()) + z.y0
-			zz = flr(3*rnd()) + z.z0
-			local c = coin:new({x=xx,y=yy,z=zz})
-			c:assign_zone(z)
-			--z.coins += 1
-		end
-	end
-end
-
-function level:make_locks()
-	-- randomly lock rooms
-	for z in all(self.zonelist) do
-		if (rnd() > 0.5 and z:get_far()) then
-			--z:lock_me()
-			--z.lock=true
-			xx = 0.5+flr(z.dx*rnd()) + z.x0
-			yy = 0.5+flr(z.dy*rnd()) + z.y0
-			zz = flr(3*rnd()) + z.z0
-			local k = key:new({x=xx,y=yy,z=zz})
-			k:assign_zone(z)
-			--z.keys += 1
-		end
-	end
-end
-
-function level:make_badguys()
-	-- make some badguys
-	for z in all(self.zonelist) do
-			xx = 0.5+flr(z.dx*rnd()) + z.x0
-			yy = 0.5+flr(z.dy*rnd()) + z.y0
-			zz = z.z0
-			local b = sentrylr:new({x=xx,y=yy,z=zz})
-			b:assign_zone(z)
-			--z.baddies+=1
-	end
-end
 
 
-function level:make_exit()
-	zf = self.zonelist[#self.zonelist]
-	px = (zf.x0+zf.x1)/2
-	py = zf.y1-1.5
-	ex = portal:new({x=px,y=py,z=zf.z0+0.5})
-	ex:assign_zone(zf)
-end
 
 function level:update()
 	if freeze > 0 then
@@ -1808,7 +1680,7 @@ __label__
 
 __map__
 646469696965676564fe6564676b67fe62636b686bfe656569666afe6465696569fe6466696667fe6564676867fe64646d6767fe6a5a676671fe64646768676b656664fe6362696d6a6864696468686a6468646b6467666a66fe6565676867fe646468676afe646368666b6c646464fe646568666afe646368666b6c646464fe
-646568676afe6464676767fe60646b6767fe6464676667fe64646b6767fe68646767676b656564fe62646a67786d676666fe66676867756d6566666d6666686d676669fe646a68676f6d6566666d676668676666696d6566696b666564fe646c6c6769696766646968646469696664676b6464fe68656768676b656664fe5f64
+646568676afe6464676767fe60646b6767fe6464676667fe64646b6767fe68646767676b656564fe62646a67786d676666fe66676867756d6566666d6666686d676669fe646a68676f6d6566666d676668676666696d6566696b666564fe646a6c6769696766646968646469696664676b6464fe68656768676b656664fe5f64
 6c6767fe6364696769fe646369666a6c646464fe6465696669fe655a676673fe64646768676b656664fe62636b696c68646764686a6864fe64636b686d6c6464646d6667666d6767666d686766fe64656b6b6c6e6569646e6668646e6767646e6866646e6965646d64666667646868676a6964fe6665676b67fe636369696efe
 646569656dfe646569656cfe646569696b6a666764feff61666f6a6f656666646667676566686765666967656667686568676964fe6965676b67666567656665686566656965fe61626d6b6b6768676667696766fe6965676b67666567656665686566656965fe62636b6a6a6a676764feff61666f6a6f656666646667676566
 68676566696765666768656668686568676964fe6965676b67666567656665686566656965fe61626d6b6b6768676667696766fe6965676b67666567656665686566656965fe62636b6a6a6a676764feff61666f6a6f6566666466676765666867656669676566676865666868656669686568676964fe6965676b6766656765
