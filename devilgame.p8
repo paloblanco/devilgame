@@ -1165,16 +1165,6 @@ level.c3=13
 level.zonelist={}
 level.zones={}
 
-function level:init_rand()
-	--self:make_zones()
-	self:random_zones()
-	self:make_zonelist()
-	self:make_player()
-	self:make_coins()
-	self:make_badguys()
-	self:make_exit()
-	self:make_locks()
-end
 
 -- need this
 function level:init_arg(ll)
@@ -1237,7 +1227,6 @@ function level:make_zonelist()
 		end
 	end
 end
-
 
 
 
