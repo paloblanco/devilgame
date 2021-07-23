@@ -1165,11 +1165,9 @@ level.c3=13
 level.zonelist={}
 level.zones={}
 
-
--- need this
+-- make level from table
 function level:init_arg(ll)
 	self.zones={}
-	print(#ll)
 	for zl in all(ll) do
 		self:add_to_zones(zl[1])
 	end
@@ -1211,8 +1209,6 @@ function level:add_to_zones(zl)
 		z1=zold+zl[2]+zl[5]}
 	add(self.zones,newzone)
 end
-
-
 
 
 function level:make_zonelist()
