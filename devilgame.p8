@@ -696,9 +696,9 @@ end
 
 function zone:make_actor(al)
 	myact=acreator[al[1]]
-	myinst=myact:new({x=al[2]+0.5+myzone.x0,
-		y=al[3]+0.5+myzone.y0,
-		z=al[4]+myzone.z0})
+	myinst=myact:new({x=al[2]+0.5+self.x0,
+		y=al[3]+0.5+self.y0,
+		z=al[4]+self.z0})
 	myinst:assign_zone(self)
 	return myinst
 end
@@ -1200,7 +1200,7 @@ function level:init_arg(ll)
 	end
 	self:make_zonelist()
 	for z in all(self.zonelist) do
-		z.reset_actors()
+		z:reset_actors()
 	end
 end
 
