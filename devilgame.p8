@@ -671,17 +671,44 @@ function zone:init()
 	self.farneighbors={}
 	self.neighbors={}
 	self.actors={}
+	-- self.actor_template={}
+	self.actors_original={}
 	self.wall={{0,0,
 	self.dx,self.dz}}
 	self.window={0,0,0,0}
 end
 
+function zone:reset_actors()
+	for aa in all(self.actors_original) do
+		aa:kill_me()
+		del(self.actors_original,aa)
+	end
+	self.actors={}
+	self.coins=0
+	self.baddies=0
+	self.keys=0
+	self.lock=false
+	for act_table in all(self.actor_template) do
+		inst = self:make_actor(act_table)
+		add(self.actors_original,inst)
+	end
+end
+
+function zone:make_actor(al)
+	myact=acreator[al[1]]
+	myinst=myact:new({x=al[2]+0.5+myzone.x0,
+		y=al[3]+0.5+myzone.y0,
+		z=al[4]+myzone.z0})
+	myinst:assign_zone(self)
+	return myinst
+end
+
 function zone:add_farneighbor(z)
- add(self.farneighbors,z)
- add(self.neighbors,z)
- add(z.nearneighbors,self)
- add(z.neighbors,self)
- self:make_wall()
+	add(self.farneighbors,z)
+	add(self.neighbors,z)
+	add(z.nearneighbors,self)
+	add(z.neighbors,self)
+	self:make_wall()
 end
 
 function zone:make_wall()
@@ -692,32 +719,32 @@ function zone:make_wall()
 	self.wall={}
 	f=self.farneighbors[1]
 	if f then
-	if self.x0<f.x0 then
-		delx=f.x0-self.x0
-		add(self.wall,{0,0,delx,self.dz})
-	end
-	if self.x1>f.x1 then
-		--delx = self.x1-f.x1
-		add(self.wall,{f.x1-self.x0,0,self.dx,self.dz})
-	end
-	if self.z0<f.z0 then
-		delz = f.z0-self.z0
-		xx0=max(0,f.x0-self.x0)
-		xx1=min(self.dx,f.x1-self.x0)
-	 --add(self.wall,{xx0,self.z0,xx1,delz})
-	 add(self.wall,{xx0,0,xx1,delz})
-	end
-	if self.z1>f.z1 then
-		delz = self.z1-f.z1
-		xx0=max(0,f.x0-self.x0)
-		xx1=min(self.dx,f.x1-self.x0)
-		add(self.wall,{xx0,f.z1-self.z0,xx1,self.dz})
-	end
-	x0win=max(f.x0-self.x0,0)
-	y0win=max(f.z0-self.z0,0)
-	x1win=min(f.x1-self.x0,self.dx)
-	y1win=min(f.z1-self.z0,self.dz)
-	self.window={x0win,y0win,x1win,y1win}
+		if self.x0<f.x0 then
+			delx=f.x0-self.x0
+			add(self.wall,{0,0,delx,self.dz})
+		end
+		if self.x1>f.x1 then
+			--delx = self.x1-f.x1
+			add(self.wall,{f.x1-self.x0,0,self.dx,self.dz})
+		end
+		if self.z0<f.z0 then
+			delz = f.z0-self.z0
+			xx0=max(0,f.x0-self.x0)
+			xx1=min(self.dx,f.x1-self.x0)
+		--add(self.wall,{xx0,self.z0,xx1,delz})
+		add(self.wall,{xx0,0,xx1,delz})
+		end
+		if self.z1>f.z1 then
+			delz = self.z1-f.z1
+			xx0=max(0,f.x0-self.x0)
+			xx1=min(self.dx,f.x1-self.x0)
+			add(self.wall,{xx0,f.z1-self.z0,xx1,self.dz})
+		end
+		x0win=max(f.x0-self.x0,0)
+		y0win=max(f.z0-self.z0,0)
+		x1win=min(f.x1-self.x0,self.dx)
+		y1win=min(f.z1-self.z0,self.dz)
+		self.window={x0win,y0win,x1win,y1win}
 	end
 end
 
@@ -1169,13 +1196,11 @@ level.zones={}
 function level:init_arg(ll)
 	self.zones={}
 	for zl in all(ll) do
-		self:add_to_zones(zl[1])
+		self:add_to_zones(zl)
 	end
 	self:make_zonelist()
-	for iz,zl in pairs(ll) do
-		for al in all(zl[2]) do
-			self:add_actor(al,iz)
-		end
+	for z in all(self.zonelist) do
+		z.reset_actors()
 	end
 end
 
@@ -1189,7 +1214,7 @@ function level:add_actor(al,iz)
 	myinst:assign_zone(myzone)
 end
 
-function level:add_to_zones(zl)
+function level:add_to_zones(zl_all)
 	lenzones = #self.zones
 	if lenzones > 0 then
 		last = self.zones[lenzones]
@@ -1201,12 +1226,15 @@ function level:add_to_zones(zl)
 		yold = 0
 		zold = 0
 	end
+	zl = zl_all[1]
+	za = zl_all[2]
 	newzone = {x0=xold+zl[1],
 		y0=yold,
 		z0=zold+zl[2],
 		x1=xold+zl[1]+zl[3],
 		y1=yold+zl[4],
-		z1=zold+zl[2]+zl[5]}
+		z1=zold+zl[2]+zl[5],
+		actor_template = za}
 	add(self.zones,newzone)
 end
 
