@@ -97,6 +97,11 @@ end
 function actor:update_late()
 end
 
+function actor:make_explosion()
+	local e = explosion:new({x=self.x,y=self.y,z=self.z})
+	e:assign_zone(self.myzone)
+end
+
 function actor:kill_me()
 	del(self.myzone.actors,self)
 	if (self.parent)	del(self.parent.children,self)
@@ -111,8 +116,8 @@ end
 function actor:hurt_me()
 	if self.blink <= 0 then
 		self.blink=60
-		self.hurt=20
-		freeze=20
+		self.hurt=30
+		freeze=30
 	end
 end
 
@@ -339,18 +344,17 @@ end
 function init_globals()
 	level_max=6
 	level_now=1
-	health=5
 	level_address_list = return_level_start_addresses()
 end
 
 -- level mode
 
 function init_level(levelnum)
- lev = 0
- lev = level:new()
- address_load = level_address_list[levelnum]
- level_mem = level_from_mem(address_load)
- lev:init_arg(level_mem)
+	lev = 0
+	lev = level:new()
+	address_load = level_address_list[levelnum]
+	level_mem = level_from_mem(address_load)
+	lev:init_arg(level_mem)
 	function level_update()
 		lev:update()
 	end
@@ -899,7 +903,12 @@ flag.pix=8
 flag.shadow=true
 
 function flag:bump_me(other)
-
+	if current_flag != self then
+		current_flag = self
+		zones_visited={}
+		self.sp = 1
+		self:make_explosion()
+	end
 end
 
 spikes = actor:new()
@@ -1016,17 +1025,16 @@ function badguy:update()
 end
 
 function badguy:draw()
- self:draw_humanoid(bg_sprites)
+	self:draw_humanoid(bg_sprites)
 end
 
 function badguy:bump_me(other)
 	if other.spinning or other.ball then
-		local e = explosion:new({x=self.x,y=self.y,z=self.z})
-		e:assign_zone(self.myzone)
+		self:make_explosion()
 		self:kill_me()
 		if other.ball then
-		 other.dz=0.5*other.jump
-		 other.airjump=true
+			other.dz=0.5*other.jump
+			other.airjump=true
 		end
 	else
 		other:hurt_me()
@@ -1181,7 +1189,7 @@ end
 dwalls=true --are we drawing walls?
 dfloors=true -- drawing perp surfaces?
 freeze=0 -- screenfreeze?
-health=5
+current_flag=0
 
 -- level object
 c1,c2,c3=2,0,13
@@ -1202,6 +1210,8 @@ function level:init_arg(ll)
 	for z in all(self.zonelist) do
 		z:reset_actors()
 	end
+	current_flag=0 -- for respawn
+	zones_visited={}
 end
 
 --needed
@@ -1253,7 +1263,6 @@ function level:make_zonelist()
 end
 
 
-
 function level:update()
 	if freeze > 0 then
 		freeze += -1
@@ -1263,6 +1272,9 @@ function level:update()
 		if (z.y0<=camfar and z.y1>=camnear) z:update()
 	end
 	cam_update(player)
+	level.cycle += 1
+	level.timer += level.cycle\60
+	level.cycle = level.cycle%60
 end
 
 function level:draw()
