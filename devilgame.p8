@@ -186,6 +186,7 @@ function actor:_move()
 					self.bumpwall=2
 				elseif self.y > z2.y0 then
 					self:assign_zone(z2) 
+					if (self==player) add_to_visited_zones(z2)
 				end
 			else
 				self.dy=0
@@ -243,6 +244,9 @@ function actor:_move()
 	end
 end
 
+function add_to_visited_zones(z2)
+	add(zones_visited,z2)
+end
 
 function actor:assign_zone(z)
 	oldz=self.myzone
@@ -258,6 +262,7 @@ function actor:assign_zone(z)
 end
 
 function actor:zone_special(z)
+	-- used at end of assign zone
 end
 
 function actor:draw()
@@ -398,16 +403,16 @@ shadow=true}
 p1 = actor:new(p_props)
 
 function p1:init()
- rleg = rightleg:new({parent=self})
- add(self.children,rleg)
- lleg = leftleg:new({parent=self})
- add(self.children,lleg)
- rarm = rightarm:new({parent=self})
- add(self.children,rarm)
- larm = leftarm:new({parent=self})
- add(self.children,larm)
- -- declare to global scope
- player = self
+	rleg = rightleg:new({parent=self})
+	add(self.children,rleg)
+	lleg = leftleg:new({parent=self})
+	add(self.children,lleg)
+	rarm = rightarm:new({parent=self})
+	add(self.children,rarm)
+	larm = leftarm:new({parent=self})
+	add(self.children,larm)
+	-- declare to global scope
+	player = self
 end
 
 function p1:update()
@@ -427,6 +432,7 @@ function p1:update()
 		self.canspin=40
 		self.spinning=true
 	end
+
 	if (btn(0)) self.dx = -self.speed*self.fast
 	if (btn(1)) self.dx = self.speed*self.fast
 	if (btn(2)) self.dy = self.speed*self.fast
@@ -466,6 +472,14 @@ end
 
 function p1:update_late()
 	self:bump_check()
+end
+
+function p1:send_to_flag()
+	self.x = current_flag.x
+	self.y = current_flag.y-0.5
+	self.z = current_flag.z
+	self:assign_zone(current_flag.myzone)
+	cam_snap(self)
 end
 
 p1_sprites = {
@@ -597,37 +611,47 @@ function point2pix(x,y,z)
 end
 
 function cam_update(target)
- damp=16
- z = target.myzone
- 
- cam_targetx = target.x + 25*target.dx
- cam_targetx = max(cam_targetx,z.x0+2)
- cam_targetx = min(cam_targetx,z.x1-2)
- if (z.dx<=4) cam_targetx = (z.x0+z.x1)/2
- dcamx = (cam_targetx-cam3dx)/damp
- 
- --cam_targetz = (target.z+z.z0)*0.5 + 5.0
- cam_targetz = (z.z0) + 5.0
- cam_targetz = min(cam_targetz,z.z1-.75)
- --zscale = (target.z + 5.0 - cam_targetz)/5.0
- zscale = (z.z0 + 5.0 - cam_targetz)/5.0
- --mid_target = mid_target_0+56*zscale
- mid_target = mid_target_0+56*zscale
- dcamz = (cam_targetz-cam3dz)/(12)
- dmid = (mid_target - cam3dymid)/12
- 
- yscale = (5-min(5,z.dz))/4--(2.5)/5.0
- ty=target.y
- cam_targety = ty-6*(1-.5*yscale) + 20*target.dy
- dcamy = (cam_targety-cam3dy)/damp
- 
- cam3dx += dcamx
- cam3dy += dcamy
- cam3dz += dcamz
- cam3dymid += dmid
- 
- camfar = farplane + cam3dy
- camnear=nearplane + cam3dy
+	damp=16
+	z = target.myzone
+
+	cam_targetx = target.x + 25*target.dx
+	cam_targetx = max(cam_targetx,z.x0+2)
+	cam_targetx = min(cam_targetx,z.x1-2)
+	if (z.dx<=4) cam_targetx = (z.x0+z.x1)/2
+	dcamx = (cam_targetx-cam3dx)/damp
+
+	--cam_targetz = (target.z+z.z0)*0.5 + 5.0
+	cam_targetz = (z.z0) + 5.0
+	cam_targetz = min(cam_targetz,z.z1-.75)
+	--zscale = (target.z + 5.0 - cam_targetz)/5.0
+	zscale = (z.z0 + 5.0 - cam_targetz)/5.0
+	--mid_target = mid_target_0+56*zscale
+	mid_target = mid_target_0+56*zscale
+	dcamz = (cam_targetz-cam3dz)/(12)
+	dmid = (mid_target - cam3dymid)/12
+
+	yscale = (5-min(5,z.dz))/4--(2.5)/5.0
+	ty=target.y
+	cam_targety = ty-6*(1-.5*yscale) + 20*target.dy
+	dcamy = (cam_targety-cam3dy)/damp
+
+	cam3dx += dcamx
+	cam3dy += dcamy
+	cam3dz += dcamz
+	cam3dymid += dmid
+
+	camfar = farplane + cam3dy
+	camnear=nearplane + cam3dy
+end
+
+function cam_snap(target)
+	cam_update(target)
+	cam3dx = cam_targetx
+	cam3dy = cam_targety
+	cam3dz = cam_targetz
+	cam3dymid = mid_target
+	camfar = farplane + cam3dy
+	camnear=nearplane + cam3dy
 end
 
 -- drawing utility functions
@@ -1203,6 +1227,8 @@ level.zones={}
 -- make level from table
 function level:init_arg(ll)
 	self.zones={}
+	current_flag=0 -- for respawn
+	zones_visited={}
 	for zl in all(ll) do
 		self:add_to_zones(zl)
 	end
@@ -1210,18 +1236,6 @@ function level:init_arg(ll)
 	for z in all(self.zonelist) do
 		z:reset_actors()
 	end
-	current_flag=0 -- for respawn
-	zones_visited={}
-end
-
---needed
-function level:add_actor(al,iz)
-	myzone=self.zonelist[iz]
-	myact=acreator[al[1]]
-	myinst=myact:new({x=al[2]+0.5+myzone.x0,
-		y=al[3]+0.5+myzone.y0,
-		z=al[4]+myzone.z0})
-	myinst:assign_zone(myzone)
 end
 
 function level:add_to_zones(zl_all)
@@ -1266,6 +1280,7 @@ end
 function level:update()
 	if freeze > 0 then
 		freeze += -1
+		if (freeze == 10) self:respawn()
 		return
 	end
 	for z in all(self.zonelist) do
@@ -1275,6 +1290,18 @@ function level:update()
 	level.cycle += 1
 	level.timer += level.cycle\60
 	level.cycle = level.cycle%60
+end
+
+function level:respawn()
+	if current_flag != 0 then
+		for z in all(zones_visited) do
+			z:reset_actors()
+		end
+		player:send_to_flag()
+	else
+		init_level(level_now)
+		cam_snap(player)
+	end
 end
 
 function level:draw()
