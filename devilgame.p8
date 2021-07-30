@@ -97,6 +97,11 @@ end
 function actor:update_late()
 end
 
+function actor:make_explosion()
+	local e = explosion:new({x=self.x,y=self.y,z=self.z})
+	e:assign_zone(self.myzone)
+end
+
 function actor:kill_me()
 	del(self.myzone.actors,self)
 	if (self.parent)	del(self.parent.children,self)
@@ -108,15 +113,11 @@ end
 function actor:bump_me(other)
 end
 
-function actor:bump_check()
-	for a in all(self.myzone.actors) do
-		if (a==self) goto continue
-		if (a==self.parent) goto continue
-		if (abs(self.x-a.x) > self.size) goto continue
-		if (abs(self.y-a.y) > self.size) goto continue
-		if (abs(self.z-a.z) > self.size) goto continue
-		a:bump_me(self)
-		::continue::
+function actor:hurt_me()
+	if self.blink <= 0 then
+		self.blink=60
+		self.hurt=30
+		freeze=30
 	end
 end
 
@@ -185,6 +186,7 @@ function actor:_move()
 					self.bumpwall=2
 				elseif self.y > z2.y0 then
 					self:assign_zone(z2) 
+					if (self==player) add_to_visited_zones(z2)
 				end
 			else
 				self.dy=0
@@ -242,6 +244,9 @@ function actor:_move()
 	end
 end
 
+function add_to_visited_zones(z2)
+	add(zones_visited,z2)
+end
 
 function actor:assign_zone(z)
 	oldz=self.myzone
@@ -257,6 +262,7 @@ function actor:assign_zone(z)
 end
 
 function actor:zone_special(z)
+	-- used at end of assign zone
 end
 
 function actor:draw()
@@ -330,6 +336,8 @@ function actor:_drawself()
 	self.pw = s0*self.size*0.5
 end
 
+
+
 -->8
 -- game loop and logic
 
@@ -341,18 +349,17 @@ end
 function init_globals()
 	level_max=6
 	level_now=1
-	health=5
 	level_address_list = return_level_start_addresses()
 end
 
 -- level mode
 
 function init_level(levelnum)
- lev = 0
- lev = level:new()
- address_load = level_address_list[levelnum]
- level_mem = level_from_mem(address_load)
- lev:init_arg(level_mem)
+	lev = 0
+	lev = level:new()
+	address_load = level_address_list[levelnum]
+	level_mem = level_from_mem(address_load)
+	lev:init_arg(level_mem)
 	function level_update()
 		lev:update()
 	end
@@ -396,16 +403,16 @@ shadow=true}
 p1 = actor:new(p_props)
 
 function p1:init()
- rleg = rightleg:new({parent=self})
- add(self.children,rleg)
- lleg = leftleg:new({parent=self})
- add(self.children,lleg)
- rarm = rightarm:new({parent=self})
- add(self.children,rarm)
- larm = leftarm:new({parent=self})
- add(self.children,larm)
- -- declare to global scope
- player = self
+	rleg = rightleg:new({parent=self})
+	add(self.children,rleg)
+	lleg = leftleg:new({parent=self})
+	add(self.children,lleg)
+	rarm = rightarm:new({parent=self})
+	add(self.children,rarm)
+	larm = leftarm:new({parent=self})
+	add(self.children,larm)
+	-- declare to global scope
+	player = self
 end
 
 function p1:update()
@@ -425,6 +432,7 @@ function p1:update()
 		self.canspin=40
 		self.spinning=true
 	end
+
 	if (btn(0)) self.dx = -self.speed*self.fast
 	if (btn(1)) self.dx = self.speed*self.fast
 	if (btn(2)) self.dy = self.speed*self.fast
@@ -464,6 +472,14 @@ end
 
 function p1:update_late()
 	self:bump_check()
+end
+
+function p1:send_to_flag()
+	self.x = current_flag.x
+	self.y = current_flag.y-0.5
+	self.z = current_flag.z
+	self:assign_zone(current_flag.myzone)
+	cam_snap(self)
 end
 
 p1_sprites = {
@@ -595,37 +611,47 @@ function point2pix(x,y,z)
 end
 
 function cam_update(target)
- damp=16
- z = target.myzone
- 
- cam_targetx = target.x + 25*target.dx
- cam_targetx = max(cam_targetx,z.x0+2)
- cam_targetx = min(cam_targetx,z.x1-2)
- if (z.dx<=4) cam_targetx = (z.x0+z.x1)/2
- dcamx = (cam_targetx-cam3dx)/damp
- 
- --cam_targetz = (target.z+z.z0)*0.5 + 5.0
- cam_targetz = (z.z0) + 5.0
- cam_targetz = min(cam_targetz,z.z1-.75)
- --zscale = (target.z + 5.0 - cam_targetz)/5.0
- zscale = (z.z0 + 5.0 - cam_targetz)/5.0
- --mid_target = mid_target_0+56*zscale
- mid_target = mid_target_0+56*zscale
- dcamz = (cam_targetz-cam3dz)/(12)
- dmid = (mid_target - cam3dymid)/12
- 
- yscale = (5-min(5,z.dz))/4--(2.5)/5.0
- ty=target.y
- cam_targety = ty-6*(1-.5*yscale) + 20*target.dy
- dcamy = (cam_targety-cam3dy)/damp
- 
- cam3dx += dcamx
- cam3dy += dcamy
- cam3dz += dcamz
- cam3dymid += dmid
- 
- camfar = farplane + cam3dy
- camnear=nearplane + cam3dy
+	damp=16
+	z = target.myzone
+
+	cam_targetx = target.x + 25*target.dx
+	cam_targetx = max(cam_targetx,z.x0+2)
+	cam_targetx = min(cam_targetx,z.x1-2)
+	if (z.dx<=4) cam_targetx = (z.x0+z.x1)/2
+	dcamx = (cam_targetx-cam3dx)/damp
+
+	--cam_targetz = (target.z+z.z0)*0.5 + 5.0
+	cam_targetz = (z.z0) + 5.0
+	cam_targetz = min(cam_targetz,z.z1-.75)
+	--zscale = (target.z + 5.0 - cam_targetz)/5.0
+	zscale = (z.z0 + 5.0 - cam_targetz)/5.0
+	--mid_target = mid_target_0+56*zscale
+	mid_target = mid_target_0+56*zscale
+	dcamz = (cam_targetz-cam3dz)/(12)
+	dmid = (mid_target - cam3dymid)/12
+
+	yscale = (5-min(5,z.dz))/4--(2.5)/5.0
+	ty=target.y
+	cam_targety = ty-6*(1-.5*yscale) + 20*target.dy
+	dcamy = (cam_targety-cam3dy)/damp
+
+	cam3dx += dcamx
+	cam3dy += dcamy
+	cam3dz += dcamz
+	cam3dymid += dmid
+
+	camfar = farplane + cam3dy
+	camnear=nearplane + cam3dy
+end
+
+function cam_snap(target)
+	cam_update(target)
+	cam3dx = cam_targetx
+	cam3dy = cam_targety
+	cam3dz = cam_targetz
+	cam3dymid = mid_target
+	camfar = farplane + cam3dy
+	camnear=nearplane + cam3dy
 end
 
 -- drawing utility functions
@@ -673,17 +699,44 @@ function zone:init()
 	self.farneighbors={}
 	self.neighbors={}
 	self.actors={}
+	-- self.actor_template={}
+	self.actors_original={}
 	self.wall={{0,0,
 	self.dx,self.dz}}
 	self.window={0,0,0,0}
 end
 
+function zone:reset_actors()
+	for aa in all(self.actors_original) do
+		aa:kill_me()
+		del(self.actors_original,aa)
+	end
+	self.actors={}
+	self.coins=0
+	self.baddies=0
+	self.keys=0
+	self.lock=false
+	for act_table in all(self.actor_template) do
+		inst = self:make_actor(act_table)
+		add(self.actors_original,inst)
+	end
+end
+
+function zone:make_actor(al)
+	myact=acreator[al[1]]
+	myinst=myact:new({x=al[2]+0.5+self.x0,
+		y=al[3]+0.5+self.y0,
+		z=al[4]+self.z0})
+	myinst:assign_zone(self)
+	return myinst
+end
+
 function zone:add_farneighbor(z)
- add(self.farneighbors,z)
- add(self.neighbors,z)
- add(z.nearneighbors,self)
- add(z.neighbors,self)
- self:make_wall()
+	add(self.farneighbors,z)
+	add(self.neighbors,z)
+	add(z.nearneighbors,self)
+	add(z.neighbors,self)
+	self:make_wall()
 end
 
 function zone:make_wall()
@@ -694,32 +747,32 @@ function zone:make_wall()
 	self.wall={}
 	f=self.farneighbors[1]
 	if f then
-	if self.x0<f.x0 then
-		delx=f.x0-self.x0
-		add(self.wall,{0,0,delx,self.dz})
-	end
-	if self.x1>f.x1 then
-		--delx = self.x1-f.x1
-		add(self.wall,{f.x1-self.x0,0,self.dx,self.dz})
-	end
-	if self.z0<f.z0 then
-		delz = f.z0-self.z0
-		xx0=max(0,f.x0-self.x0)
-		xx1=min(self.dx,f.x1-self.x0)
-	 --add(self.wall,{xx0,self.z0,xx1,delz})
-	 add(self.wall,{xx0,0,xx1,delz})
-	end
-	if self.z1>f.z1 then
-		delz = self.z1-f.z1
-		xx0=max(0,f.x0-self.x0)
-		xx1=min(self.dx,f.x1-self.x0)
-		add(self.wall,{xx0,f.z1-self.z0,xx1,self.dz})
-	end
-	x0win=max(f.x0-self.x0,0)
-	y0win=max(f.z0-self.z0,0)
-	x1win=min(f.x1-self.x0,self.dx)
-	y1win=min(f.z1-self.z0,self.dz)
-	self.window={x0win,y0win,x1win,y1win}
+		if self.x0<f.x0 then
+			delx=f.x0-self.x0
+			add(self.wall,{0,0,delx,self.dz})
+		end
+		if self.x1>f.x1 then
+			--delx = self.x1-f.x1
+			add(self.wall,{f.x1-self.x0,0,self.dx,self.dz})
+		end
+		if self.z0<f.z0 then
+			delz = f.z0-self.z0
+			xx0=max(0,f.x0-self.x0)
+			xx1=min(self.dx,f.x1-self.x0)
+		--add(self.wall,{xx0,self.z0,xx1,delz})
+		add(self.wall,{xx0,0,xx1,delz})
+		end
+		if self.z1>f.z1 then
+			delz = self.z1-f.z1
+			xx0=max(0,f.x0-self.x0)
+			xx1=min(self.dx,f.x1-self.x0)
+			add(self.wall,{xx0,f.z1-self.z0,xx1,self.dz})
+		end
+		x0win=max(f.x0-self.x0,0)
+		y0win=max(f.z0-self.z0,0)
+		x1win=min(f.x1-self.x0,self.dx)
+		y1win=min(f.z1-self.z0,self.dz)
+		self.window={x0win,y0win,x1win,y1win}
 	end
 end
 
@@ -868,6 +921,82 @@ function portal:bump_me(other)
 	end
 end
 
+flag = actor:new()
+flag.sp=74
+flag.pix=8
+flag.shadow=true
+
+function flag:bump_me(other)
+	if current_flag != self then
+		current_flag = self
+		zones_visited={}
+		self.sp = 1
+		self:make_explosion()
+	end
+end
+
+spikes = actor:new()
+spikes.sp=75
+spikes.pix=8
+spikes.shadow=false
+spikes.hcount=1
+
+function spikes:bump_me(other)
+	other:hurt_me()
+end
+
+function spikes:zone_special(z)
+ self.hcount=z.x1+0.5-self.x
+ if self.y+1 < z.y1 then
+		ss = spikes:new({x=self.x,y=self.y+1,z=self.z})
+		ss:assign_zone(z)
+	end
+end
+
+function spikes:draw()
+	local xp0,yp0,s0 = point2pix(self.x,self.y+self.yup,self.z+self.zup)
+	local xpix=xp0-s0*0.5*self.size+0.5+self.xpadd
+	local ypix=yp0-s0*self.size+self.ypadd
+	
+	for xoff=1,self.hcount,1 do
+		sspr((self.sp%16)*8,
+	     flr(self.sp/16)*8,
+	     self.pix,self.pix,
+	     xpix+(s0*(xoff-1)),ypix,
+	     s0*self.size,s0*self.size,
+	     self.flipme)
+	end
+	self.px = xpix
+	self.py = ypix
+	self.pw = s0*self.size*0.5
+end
+
+balloon = actor:new()
+balloon.sp=90
+balloon.pix=8
+balloon.shadow=true
+balloon.timer2=0
+
+function balloon:update()
+	self.drawme=true
+	if (self.timer2 > 0) self.drawme=false
+	self.timer = (self.timer+1)%60
+	self.zup = 0.2*sin(self.timer/60)
+	self.timer2 = max(self.timer2-1,0)
+end
+
+function balloon:bump_me(other)
+	if self.timer2 <= 0 and (other.spinning or other.ball) then
+		local e = explosion:new({x=self.x,y=self.y,z=self.z})
+		e:assign_zone(self.myzone)
+		self.timer2=60
+		if other.ball then
+		 other.dz=0.5*other.jump
+		 other.airjump=true
+		end
+	end
+end
+
 badguy = actor:new()
 badguy.sp=32
 badguy.shadow=true
@@ -912,28 +1041,27 @@ function badguy:update()
 		self.dx=0
 		self.dy=0
 	end
+	if (self.y-0.6+self.dy < self.myzone.y0) self.bumpwall=3
+	if (self.y+0.6+self.dy > self.myzone.y1) self.bumpwall=2
 	self:bounceoffwalls()
 	self.timer += -1
 	self:_move()
 end
 
 function badguy:draw()
- self:draw_humanoid(bg_sprites)
+	self:draw_humanoid(bg_sprites)
 end
 
 function badguy:bump_me(other)
 	if other.spinning or other.ball then
-		local e = explosion:new({x=self.x,y=self.y,z=self.z})
-		e:assign_zone(self.myzone)
+		self:make_explosion()
 		self:kill_me()
 		if other.ball then
-		 other.dz=0.5*other.jump
-		 other.airjump=true
+			other.dz=0.5*other.jump
+			other.airjump=true
 		end
-	elseif other.blink <= 0 then
-		other.blink=60
-		other.hurt=20
-		freeze=20
+	else
+		other:hurt_me()
 	end
 end
 
@@ -946,6 +1074,8 @@ sentrylr.speed*=1.5
 sentrylr.dx = sentrylr.speed
 
 function sentrylr:update()
+	if (self.y-0.6+self.dy < self.myzone.y0) self.bumpwall=3
+	if (self.y+0.6+self.dy > self.myzone.y1) self.bumpwall=2
 	self:bounceoffwalls()
 	self:_move()
 end
@@ -953,6 +1083,11 @@ end
 sentryud = sentrylr:new()
 sentryud.dy=sentryud.speed
 sentryud.dx=0
+
+sentrydr = sentryud:new()
+sentrydr.dy=sentryud.speed*.707
+sentrydr.dx=sentryud.speed*.707
+
 
 macer = badguy:new()
 
@@ -1078,7 +1213,7 @@ end
 dwalls=true --are we drawing walls?
 dfloors=true -- drawing perp surfaces?
 freeze=0 -- screenfreeze?
-health=5
+current_flag=0
 
 -- level object
 c1,c2,c3=2,0,13
@@ -1089,41 +1224,21 @@ level.c3=13
 level.zonelist={}
 level.zones={}
 
-function level:init_rand()
-	--self:make_zones()
-	self:random_zones()
-	self:make_zonelist()
-	self:make_player()
-	self:make_coins()
-	self:make_badguys()
-	self:make_exit()
-	self:make_locks()
-end
-
+-- make level from table
 function level:init_arg(ll)
 	self.zones={}
-	print(#ll)
+	current_flag=0 -- for respawn
+	zones_visited={}
 	for zl in all(ll) do
-		self:add_to_zones(zl[1])
+		self:add_to_zones(zl)
 	end
 	self:make_zonelist()
-	for iz,zl in pairs(ll) do
-		for al in all(zl[2]) do
-			self:add_actor(al,iz)
-		end
+	for z in all(self.zonelist) do
+		z:reset_actors()
 	end
 end
 
-function level:add_actor(al,iz)
-	myzone=self.zonelist[iz]
-	myact=acreator[al[1]]
-	myinst=myact:new({x=al[2]+0.5+myzone.x0,
-		y=al[3]+0.5+myzone.y0,
-		z=al[4]+myzone.z0})
-	myinst:assign_zone(myzone)
-end
-
-function level:add_to_zones(zl)
+function level:add_to_zones(zl_all)
 	lenzones = #self.zones
 	if lenzones > 0 then
 		last = self.zones[lenzones]
@@ -1135,89 +1250,18 @@ function level:add_to_zones(zl)
 		yold = 0
 		zold = 0
 	end
+	zl = zl_all[1]
+	za = zl_all[2]
 	newzone = {x0=xold+zl[1],
 		y0=yold,
 		z0=zold+zl[2],
 		x1=xold+zl[1]+zl[3],
 		y1=yold+zl[4],
-		z1=zold+zl[2]+zl[5]}
+		z1=zold+zl[2]+zl[5],
+		actor_template = za}
 	add(self.zones,newzone)
 end
 
-function level:random_zones()
-	z0 = {
-	x0=-3,y0=-6,z0=2,x1=11,y1=0,z1=11
-	}
-	self.zones={z0}
-	for i=1,2+level_now,1 do
-		self:append_tunnel()
-		self:append_arena()
-	end
-	self:append_endroom()
-end
-
-function level:append_endroom()
-	self:append_tunnel()
-	self:append_arena()
-end
-
-function level:append_arena()
-	zl=self.zones[#self.zones]
-	zs=-3+flr(rnd(5))
-	dz=5+flr(rnd(3))
-	dx=5+flr(rnd(5))
-	dy=4+flr(rnd(5))
-	xs=-dx+1+flr(rnd(dx))
-	zadd={x0=zl.x0+xs,
-	y0=zl.y1,
-	z0=zl.z0+zs,
-	x1=zl.x0+xs+dx,
-	y1=zl.y1+dy,
-	z1=zl.z0+zs+dz}
-	add(self.zones,zadd)
-end
-
-function level:append_tunnel()
-	zl=self.zones[#self.zones]
-	dxl = zl.x1-zl.x0
-	-- tunnel 1
-	xs=flr(rnd(dxl-2))
-	zs=flr(rnd(2))
-	yf=3+flr(rnd(8))
-	zadd={x0=zl.x0+xs,
-	y0=zl.y1,
-	z0=zl.z0+zs,
-	x1=zl.x0+xs+3,
-	y1=zl.y1+yf,
-	z1=zl.z0+zs+3}
-	add(self.zones,zadd)	
-end
-
-function level:make_zones()
-	z0 = {
-	x0=-3,y0=-6,z0=0,x1=11,y1=0,z1=9
-	}
-	z1 = {
-	x0=0,y0=0,z0=0,x1=8,y1=4,z1=8
-	}
-	z2 = {
-	x0=1,y0=4,z0=2,x1=7,y1=8,z1=6
-	}
-	z3 = {
-	x0=0,y0=8,z0=0,x1=8,y1=12,z1=8
-	}
-	z4 = {
-	x0=3,y0=12,z0=0,x1=8,y1=14,z1=8
-	}
-	z5 = {
-	x0=0,y0=14,z0=0,x1=8,y1=20,z1=8
-	}
-	z6 = {
-	x0=3,y0=20,z0=0,x1=16,y1=24,z1=8
-	}
-	self.zones={}
-	self.zones = {z0,z1,z2,z3,z4,z5,z6}	
-end
 
 function level:make_zonelist()
 	self.zonelist={}
@@ -1232,76 +1276,32 @@ function level:make_zonelist()
 	end
 end
 
-function level:make_player()
-	z0 = self.zonelist[1]
-	-- player is being 
-	-- declared globally
-	px = (z0.x0+z0.x1)/2
-	py = z0.y0+1
-	player = p1:new({x=px,y=py,z=z0.z})
-	player:assign_zone(self.zonelist[1])
-end
-
-function level:make_coins()
-	-- make some coins
-	for z in all(self.zonelist) do
-		for i=1,4,1 do
-			xx = 0.5+flr(z.dx*rnd()) + z.x0
-			yy = 0.5+flr(z.dy*rnd()) + z.y0
-			zz = flr(3*rnd()) + z.z0
-			local c = coin:new({x=xx,y=yy,z=zz})
-			c:assign_zone(z)
-			--z.coins += 1
-		end
-	end
-end
-
-function level:make_locks()
-	-- randomly lock rooms
-	for z in all(self.zonelist) do
-		if (rnd() > 0.5 and z:get_far()) then
-			--z:lock_me()
-			--z.lock=true
-			xx = 0.5+flr(z.dx*rnd()) + z.x0
-			yy = 0.5+flr(z.dy*rnd()) + z.y0
-			zz = flr(3*rnd()) + z.z0
-			local k = key:new({x=xx,y=yy,z=zz})
-			k:assign_zone(z)
-			--z.keys += 1
-		end
-	end
-end
-
-function level:make_badguys()
-	-- make some badguys
-	for z in all(self.zonelist) do
-			xx = 0.5+flr(z.dx*rnd()) + z.x0
-			yy = 0.5+flr(z.dy*rnd()) + z.y0
-			zz = z.z0
-			local b = sentrylr:new({x=xx,y=yy,z=zz})
-			b:assign_zone(z)
-			--z.baddies+=1
-	end
-end
-
-
-function level:make_exit()
-	zf = self.zonelist[#self.zonelist]
-	px = (zf.x0+zf.x1)/2
-	py = zf.y1-1.5
-	ex = portal:new({x=px,y=py,z=zf.z0+0.5})
-	ex:assign_zone(zf)
-end
 
 function level:update()
 	if freeze > 0 then
 		freeze += -1
+		if (freeze == 10) self:respawn()
 		return
 	end
 	for z in all(self.zonelist) do
 		if (z.y0<=camfar and z.y1>=camnear) z:update()
 	end
 	cam_update(player)
+	level.cycle += 1
+	level.timer += level.cycle\60
+	level.cycle = level.cycle%60
+end
+
+function level:respawn()
+	if current_flag != 0 then
+		for z in all(zones_visited) do
+			z:reset_actors()
+		end
+		player:send_to_flag()
+	else
+		init_level(level_now)
+		cam_snap(player)
+	end
 end
 
 function level:draw()
@@ -1430,6 +1430,10 @@ nkey = 3
 nsentrylr = 4
 nsentryud = 5
 nportal = 6
+nflag = 7
+nspikes = 8
+nballoon = 9
+nsentrydr = 10
 
 acreator={}
 acreator[nhero]=p1
@@ -1438,6 +1442,10 @@ acreator[nkey]=key
 acreator[nsentrylr] = sentrylr
 acreator[nsentryud] = sentryud
 acreator[nportal] = portal
+acreator[nflag] = flag
+acreator[nspikes] = spikes
+acreator[nballoon] = balloon
+acreator[nsentrydr] = sentrydr
 
 mstart=0x2000
 
@@ -1552,22 +1560,22 @@ __gfx__
 11077777777770111107777777777011171111711111111111010870080100110801000000001080108800888800880111088008880111111108888888888011
 11107777777701111110777777770111117777111111111111111000001111111011111111111101110011000011001111108000001111111110888888880111
 11110000000011111111000000001111111111111111111111111111111111111111111111111111111111111111111111110111111111111111000000001111
-11000011110000111100001111000011111111111111111111011111111111011111111111111111111111111111111111111111111111111111111111111111
-10dddd011066660110dddd0110dddd01100010000001000110601000000100601111111111111111111111111111111111111111111111111111111111111111
-06dddd600670776010dddd0110dddd01106605555550660110660777777066601111111111111111111111111111111111111111111111111111111111111111
-0666d660060000601100d0111100d011106055550555060111007777770666011111111111111111111111111111111111111111111111111111111111111111
-066dd66006700760110dd011110dd011110555506055501111077707777000111111111111111111111111111111111111111111111111111111111111111111
-0666d660067077601110d0111110d011105555550555550111070000007770111111111111111111111111111111111111111111111111111111111111111111
-066dd66006666660110dd011110dd011105505555555550111077000777770111111111111111111111111111111111111111111111111111111111111111111
-00000000000000001110011111100111105060555550550110077707777000111111111111111111111111111111111111111111111111111111111111111111
-11000011115555111100001111000011105505555506050107077707770777011111111111111111111111111111111111111111111111111111111111111111
-106666011566665110dddd0110dddd01105555555550550100077707770077011111111111111111111111111111111111111111111111111111111111111111
-066006606661166510dddd0110dddd01105555505555550107077707770777011111111111111111111111111111111111111111111111111111111111111111
-060ee060661111651100d0111100d011110555060555501100077777770077011111111111111111111111111111111111111111111111111111111111111111
-060ee06065111166110dd011110dd011106055505555060107077777770777011111111111111111111111111111111111111111111111111111111111111111
-06600660665115661110d0111110d011106605555550660110077777777000111111111111111111111111111111111111111111111111111111111111111111
-0666666016655661110dd011110dd011100010000001000111107777777701111111111111111111111111111111111111111111111111111111111111111111
-00000000116666111110011111100111111111111111111111110000000011111111111111111111111111111111111111111111111111111111111111111111
+11000011110000111100001111000011111111111111111111011111111111011101111111111101161188111117611111111111111111111111111111111111
+10dddd011066660110dddd0110dddd01100010000001000110601000000100601060100000010060108888881117611111111111111111111111111111111111
+06dddd600670776010dddd0110dddd011066055555506601106607777770666010660777777066601088aa881117611111111111111111111111111111111111
+0666d660060000601100d0111100d01110605555055506011100777777066601110077777706660110aa88aa1176661111111111111111111111111111111111
+066dd66006700760110dd011110dd011110555506055501111077707777000111107770777700011108888881176661111111111111111111111111111111111
+0666d660067077601110d0111110d011105555550555550111070000007770111107000000777011108811881776665111111111111111111111111111111111
+066dd66006666660110dd011110dd011105505555555550111077000777770111107700077777011101111117766666511111111111111111111111111111111
+00000000000000001110011111100111105060555550550110077707777000111007770777700011101111117766666511111111111111111111111111111111
+11000011115555111100001111000011105505555506050107077707770777010707770777077701117777111111111111111111111111111111111111111111
+106666011566665110dddd0110dddd01105555555550550100077707770077010007770777007701176666711111111111111111111111111111111111111111
+066006606661166510dddd0110dddd01105555505555550107077707770777010707770777077701766677671111111111111111111111111111111111111111
+060ee060661111651100d0111100d011110555060555501100077777770077010007777777007701766667671111111111111111111111111111111111111111
+060ee06065111166110dd011110dd011106055505555060107077777770777010707777777077701766666671111111111111111111111111111111111111111
+06600660665115661110d0111110d011106605555550660110077777777000111007777777700011766666671111111111111111111111111111111111111111
+0666666016655661110dd011110dd011100010000001000111107777777701111110777777770111176666711111111111111111111111111111111111111111
+00000000116666111110011111100111111111111111111111110000000011111111000000001111117777111111111111111111111111111111111111111111
 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
 11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
@@ -1723,8 +1731,11 @@ __label__
 88888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
 
 __map__
-646469696965676564fe6564676b67fe62636b686bfe656569666afe6465696569fe6466696667fe6564676867fe64646d6767fe6a5a676671feff61666f6a6f656666646667676566686765666967656667686568676964fe6965676b67666567656665686566656965fe61626d6b6b6768676667696766fe6965676b676665
-67656665686566656965fe62636b6a6a6a676764feff61666f6a6f65666664666767656668676566696765666768656668686568676964fe6965676b67666567656665686566656965fe61626d6b6b6768676667696766fe6965676b67666567656665686566656965fe62636b6a6a6a676764feff61666f6a6f656666646667
-6765666867656669676566676865666868656669686568676964fe6965676b67666567656665686566656965fe61626d6b6b6768676667696766fe6965676b67666567656665686566656965fe62636b6a6a6a676764feff61666f6a6f6566666466676765666867656669676566676865666868656669686566676766666867
-666669676668676964fe6965676b67666567656665686566656965fe61626d6b6b6768676667696766fe6965676b67666567656665686566656965fe62636b6a6a6a676764feff61666f6a6f65666664666767656668676566696765666768656668686566696865666767666668676666696766666766656668666566696665
-68676964fe6965676b67666567656665686566656965fe61626d6b6b6768676667696766fe6965676b67666567656665686566656965fe62636b6a6a6a676764feff0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+646469696965676564fe6564676b67fe62636b686bfe656569666afe6465696569fe6466696667fe6564676867fe64646d6767fe6a5a676671fe64646768676b656664fe6362696d6a6864696468686a6468646b6467666a66fe6565676867fe646468676afe646368666b6c646464fe646568666afe646368666b6c646464fe
+646568676afe6464676767fe60646b6767fe6464676667fe64646b6767fe68646767676b656564fe62646a67786d676666fe66676867756d6566666d6666686d676669fe646a68676f6d6566666d676668676666696d6566696b666564fe646a6c6769696766646968646469696664676b6464fe68656768676b656664fe5f64
+6c6767fe6364696769fe646369666a6c646464fe6465696669fe655a676673fe64646768676b656664fe62636b696c68646764686a6864fe64636b686d6c6464646d6667666d6767666d686766fe64656b6b6c6e6569646e6668646e6767646e6866646e6965646d64666667646868676a6964fe6665676b67fe636369696efe
+646569656dfe646569656cfe646569696b6a666764feff61666f6a6f656666646667676566686765666967656667686568676964fe6965676b67666567656665686566656965fe61626d6b6b6768676667696766fe6965676b67666567656665686566656965fe62636b6a6a6a676764feff61666f6a6f656666646667676566
+68676566696765666768656668686568676964fe6965676b67666567656665686566656965fe61626d6b6b6768676667696766fe6965676b67666567656665686566656965fe62636b6a6a6a676764feff61666f6a6f6566666466676765666867656669676566676865666868656669686568676964fe6965676b6766656765
+6665686566656965fe61626d6b6b6768676667696766fe6965676b67666567656665686566656965fe62636b6a6a6a676764feff61666f6a6f6566666466676765666867656669676566676865666868656669686566676766666867666669676668676964fe6965676b67666567656665686566656965fe61626d6b6b676867
+6667696766fe6965676b67666567656665686566656965fe62636b6a6a6a676764feff61666f6a6f6566666466676765666867656669676566676865666868656669686566676766666867666669676666676665666866656669666568676964fe6965676b67666567656665686566656965fe61626d6b6b6768676667696766
+fe6965676b67666567656665686566656965fe62636b6a6a6a676764feff0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
