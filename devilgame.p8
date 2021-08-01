@@ -620,11 +620,11 @@ function cam_update(target)
 	if (z.dx<=4) cam_targetx = (z.x0+z.x1)/2
 	dcamx = (cam_targetx-cam3dx)/damp
 
-	--cam_targetz = (target.z+z.z0)*0.5 + 5.0
-	cam_targetz = (z.z0) + 5.0
-	cam_targetz = min(cam_targetz,z.z1-.75)
-	--zscale = (target.z + 5.0 - cam_targetz)/5.0
-	zscale = (z.z0 + 5.0 - cam_targetz)/5.0
+	cam_targetz0 = max((target.z) + 4.0, (z.z0) + 5.0)
+	-- cam_targetz = (z.z0) + 5.0
+	cam_targetz = min(cam_targetz0,z.z1-.75)
+	zscale = (cam_targetz0 - cam_targetz)/5.0
+	-- zscale = (z.z0 + 5.0 - cam_targetz)/5.0
 	--mid_target = mid_target_0+56*zscale
 	mid_target = mid_target_0+56*zscale
 	dcamz = (cam_targetz-cam3dz)/(12)
