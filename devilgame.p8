@@ -62,6 +62,9 @@ vel=0,
 sp=2,
 pix=16,
 size=1,
+sizex=1, -- collisions
+sizey=1,
+sizez=1,
 speed=0.05,
 fast=1,
 grav=0.01,
@@ -69,6 +72,7 @@ ground=false,
 jump=0.2,
 angle=0.75,
 flipme=false, -- mirror sprite
+flipmey=false,
 shadow=false,
 cycle=0, --hold animation stuff
 myzone=nil, --needs to be assigned
@@ -121,13 +125,19 @@ function actor:hurt_me()
 	end
 end
 
+function actor:bounce_off_head(other)
+	self.dz=0.5*self.jump
+	self.airjump=true
+	self.z = max(self.z,other.z)
+end
+
 function actor:bump_check()
 	for a in all(self.myzone.actors) do
 		if (a==self) goto continue
 		if (a==self.parent) goto continue
-		if (abs(self.x-a.x) > self.size) goto continue
-		if (abs(self.y-a.y) > self.size) goto continue
-		if (abs(self.z-a.z) > self.size) goto continue
+		if (abs(self.x-a.x) > a.sizex+self.sizex) goto continue
+		if (abs(self.y-a.y) > a.sizey+self.sizey) goto continue
+		if (abs(self.z-a.z) > a.sizez+self.sizez) goto continue
 		a:bump_me(self)
 		::continue::
 	end
@@ -162,14 +172,14 @@ function actor:_move()
 	self.bumpwall=nil
 	z0=self.myzone
 	if self.x < z0.x0+0.2 then
-	 self.dx=0
-	 self.x=z0.x0+0.2
-	 self.bumpwall=0
+		self.dx=0
+		self.x=z0.x0+0.2
+		self.bumpwall=0
 	end
 	if self.x > z0.x1-0.2 then
-	 self.dx=0
-	 self.x=z0.x1-0.2
-	 self.bumpwall=1
+		self.dx=0
+		self.x=z0.x1-0.2
+		self.bumpwall=1
 	end
 	
 	if self.dy>0 then
@@ -273,18 +283,20 @@ end
 ball1={40,42,46}
 ball2={38,44,46}
 ballspin=1
+
 function actor:draw_humanoid(sp_lookup)
- ix_a = flr(self.angle*8.01)+1
- ix_a = min(ix_a,8)
- sprite = sp_lookup[ix_a]
+	ix_a = flr(self.angle*8.01)+1
+	ix_a = min(ix_a,8)
+	sprite = sp_lookup[ix_a]
+	self.flipmey=false
 	
 	if self.spinning then
-	 self.sp = sprite[1]
-	 if (rnd()>.5) self.sp=14
+		self.sp = sprite[1]
+		if (rnd()>.5) self.sp=14
 	elseif self.ball then
-		ballspin = (ballspin+0.5)%3
 		if (self.angle*8)%4 > 1 and (self.angle*8)%4 < 3 then
 			self.sp=ball1[1+flr(ballspin)]
+			if (self.angle < 0.5) self.flipmey=true
 		else
 			self.sp=ball2[1+flr(ballspin)]
 		end		
@@ -330,7 +342,7 @@ function actor:_drawself()
 	     self.pix,self.pix,
 	     xpix,ypix,
 	     s0*self.size,s0*self.size,
-	     self.flipme)
+	     self.flipme,self.flipmey)
 	self.px = xpix
 	self.py = ypix
 	self.pw = s0*self.size*0.5
@@ -398,7 +410,10 @@ x=4,
 y=-2,
 z=0,
 zup=0.2,
-shadow=true}
+shadow=true,
+sizex=0,
+sizey=0,
+sizez=0}
 
 p1 = actor:new(p_props)
 
@@ -419,7 +434,7 @@ function p1:update()
 	self.dx=0
 	self.dy=0
 	self.vel=0
-	
+		
 	-- running and spinning
 	self.fast=1.5 --1
 	self.canspin = max(self.canspin-1,0)
@@ -459,9 +474,10 @@ function p1:update()
 	
 	self:_move()	
 	if self.ground then
-	 self.ball = false
-	 self.airjump = false
+		self.ball = false
+		self.airjump = false
 	end
+	ballspin = (ballspin+0.5)%3
 end
 
 function p1:make_spinner()
@@ -922,7 +938,7 @@ function portal:bump_me(other)
 end
 
 flag = actor:new()
-flag.sp=74
+flag.sp=91
 flag.pix=8
 flag.shadow=true
 
@@ -930,7 +946,7 @@ function flag:bump_me(other)
 	if current_flag != self then
 		current_flag = self
 		zones_visited={}
-		self.sp = 91
+		self.sp = 74
 		self:make_explosion()
 	end
 end
@@ -940,6 +956,8 @@ spikes.sp=75
 spikes.pix=8
 spikes.shadow=false
 spikes.hcount=1
+spikes.sizex = 100 -- super wide so it spans the level
+spikes.sizez = 0.25 -- super wide so it spans the level
 
 function spikes:bump_me(other)
 	other:hurt_me()
@@ -991,8 +1009,7 @@ function balloon:bump_me(other)
 		e:assign_zone(self.myzone)
 		self.timer2=60
 		if other.ball then
-		 other.dz=0.5*other.jump
-		 other.airjump=true
+			other:bounce_off_head(self)
 		end
 	end
 end
@@ -1057,8 +1074,7 @@ function badguy:bump_me(other)
 		self:make_explosion()
 		self:kill_me()
 		if other.ball then
-			other.dz=0.5*other.jump
-			other.airjump=true
+			other:bounce_off_head(self)
 		end
 	else
 		other:hurt_me()
@@ -1097,6 +1113,9 @@ spinner.zup=0.5
 spinner.timer=30
 spinner.size = 1.5
 spinner.spinning=true
+spinner.sizex=0.5
+spinner.sizey=0.5
+spinner.sizez=0.5
 
 function spinner:init()
 	self.y = self.parent.y
