@@ -12,6 +12,7 @@ nflag = 7
 nspikes = 8
 nballoon = 9
 nsentrydr = 10
+nmacer = 11
 
 function add_zone(layout,actorinfo,destination)
     local zz = {}
