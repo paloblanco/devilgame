@@ -12,11 +12,11 @@ zone1 = {}
 layout1 = {-3,2,11,8,11} --x0,z0,dx,dy,dz
 a1 = {
     {nhero,2,2,0}, -- nactor,dx,dy,dz
-    {ncoin,3,3,1},
-    {ncoin,4,3,1},
-    {ncoin,5,3,1},
-    {ncoin,3,4,1},
-    {nmacer,3,4,0}
+    -- {ncoin,3,3,1},
+    -- {ncoin,4,3,1},
+    -- {ncoin,5,3,1},
+    -- {ncoin,3,4,1},
+    {nmacer,4,4,0}
 }
 add(zone1,layout1)
 add(zone1,a1)
