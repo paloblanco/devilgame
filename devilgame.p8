@@ -88,6 +88,8 @@ ball=false, -- jump spin?
 hurt=0,
 blink=0,
 airjump=false,
+hcount=1, -- repeated horizontal texture
+vcount=1 -- repeated vertical texture
 }
 
 actor=thing:new(actor_props)
@@ -99,6 +101,9 @@ function actor:update()
 end
 
 function actor:update_late()
+end
+
+function actor:make_actor_on_me(otherclass)
 end
 
 function actor:make_explosion(xoff,yoff,zoff,ss)
