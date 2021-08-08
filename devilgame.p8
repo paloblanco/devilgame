@@ -101,8 +101,12 @@ end
 function actor:update_late()
 end
 
-function actor:make_explosion()
-	local e = explosion:new({x=self.x,y=self.y,z=self.z})
+function actor:make_explosion(xoff,yoff,zoff,ss)
+	xoff=xoff or 0
+	yoff=yoff or 0
+	zoff=zoff or 0
+	ss=ss or 1
+	local e = explosion:new({x=self.x+xoff,y=self.y+yoff,z=self.z+zoff,size=ss})
 	e:assign_zone(self.myzone)
 end
 
@@ -118,11 +122,6 @@ function actor:bump_me(other)
 end
 
 function actor:hurt_me()
-	if self.blink <= 0 then
-		self.blink=60
-		self.hurt=30
-		freeze=30
-	end
 end
 
 function actor:bounce_off_head(other)
@@ -498,6 +497,15 @@ function p1:send_to_flag()
 	self:assign_zone(current_flag.myzone)
 	cam_snap(self)
 end
+
+function p1:hurt_me()
+	if self.blink <= 0 then
+		self.blink=60
+		self.hurt=30
+		freeze=30
+	end
+end
+
 
 p1_sprites = {
 {4,true},
@@ -1124,7 +1132,7 @@ function laserv:update_late()
 	self.timer = (self.timer+1)%60
 	self.sp=96
 	if (self.timer%6>2) self.sp=97
-	-- if (self.timer%6==0) self:make_explosion()
+	if (self.timer%4==0) self:make_explosion(rnd()-.5,rnd()-0.5,0,0.75)
 end
 
 function laserv:draw()
