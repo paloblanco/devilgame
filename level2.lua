@@ -4,6 +4,12 @@ nkey = 3
 nsentrylr = 4
 nsentryud = 5
 nportal = 6
+nflag = 7
+nspikes = 8
+nballoon = 9
+nsentrydr = 10
+nmacer = 11
+nlaserv=12
 
 function make_level2()
 level1 = {}
@@ -16,7 +22,8 @@ a1 = {
     -- {ncoin,4,3,1},
     -- {ncoin,5,3,1},
     -- {ncoin,3,4,1},
-    {nmacer,4,4,0}
+    {nmacer,4,4,0},
+    {nlaserv,5,6,0}
 }
 add(zone1,layout1)
 add(zone1,a1)
