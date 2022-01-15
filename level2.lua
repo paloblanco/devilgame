@@ -4,19 +4,31 @@ nkey = 3
 nsentrylr = 4
 nsentryud = 5
 nportal = 6
+nflag = 7
+nspikes = 8
+nballoon = 9
+nsentrydr = 10
+nmacer = 11
+nlaserv=12
+nlaserh=13
+ngunnerud=14
 
 function make_level2()
 level1 = {}
 
 zone1 = {}
-layout1 = {-3,2,11,6,11} --x0,z0,dx,dy,dz
+layout1 = {-3,2,11,8,11} --x0,z0,dx,dy,dz
 a1 = {
     {nhero,2,2,0}, -- nactor,dx,dy,dz
-    {ncoin,3,3,1},
-    {ncoin,4,3,1},
-    {ncoin,5,3,1},
-    {ncoin,3,4,1},
-    {nsentrylr,3,5,0}
+    -- {ncoin,3,3,1},
+    -- {ncoin,4,3,1},
+    -- {ncoin,5,3,1},
+    -- {ncoin,3,4,1},
+    {nmacer,4,4,0},
+    {nlaserv,5,6,0},
+    {nlaserh,1,5,2},
+    {ngunnerud,-2,2,0},
+    {ngunnerud,7,2,0},
 }
 add(zone1,layout1)
 add(zone1,a1)

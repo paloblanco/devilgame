@@ -54,3 +54,4 @@ end
 put_all_levels_into_mem()
 used_mem = 0x3000 - current_write_address
 print("map used: "..(1 - used_mem/0x1000))
+printh("map used: "..(1 - used_mem/0x1000))
