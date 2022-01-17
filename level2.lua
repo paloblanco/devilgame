@@ -19,15 +19,15 @@ level1 = {}
 zone1 = {}
 layout1 = {-3,2,11,8,11} --x0,z0,dx,dy,dz
 a1 = {
-    {nhero,2,2,0}, -- nactor,dx,dy,dz
+    {nhero,0,2,0}, -- nactor,dx,dy,dz
     -- {ncoin,3,3,1},
     -- {ncoin,4,3,1},
     -- {ncoin,5,3,1},
     -- {ncoin,3,4,1},
     {nmacer,4,4,0},
     {nlaserv,5,6,0},
-    {nlaserh,1,5,2},
-    {ngunnerud,-2,2,0},
+    {nlaserh,0,6,2},
+    {ngunnerud,4,2,0},
     {ngunnerud,7,2,0},
 }
 add(zone1,layout1)
