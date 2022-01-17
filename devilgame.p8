@@ -1527,7 +1527,7 @@ function level:draw()
 end
 -->8
 -- transitions
-title = actor:new()
+title = thing:new()
 
 function title:update()
 	if (btnp(4)) init_level(level_now)

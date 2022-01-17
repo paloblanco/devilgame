@@ -12,4 +12,4 @@ This is a 3D action-platformer for pico8. Key features:
 
 ### Run:
 
-    pico8 -run develigame.p8
+    pico8 -run devilgame.p8
