@@ -1040,6 +1040,8 @@ badguy.sp=32
 badguy.shadow=true
 badguy.zup=0.2
 badguy.speed = 0.025
+badguy.sp1=32
+badguy.sp2=34
 
 function badguy:make_legs()
  self.children={}
@@ -1049,21 +1051,23 @@ function badguy:make_legs()
  add(self.children,lleg)
 end
 
-function badguy:init()
-	self:make_legs()
+function badguy:make_s_list()
+    self.sprites = {
+        {self.sp1,true},
+        {self.sp2,true},
+        {self.sp2,true},
+        {self.sp2,false},
+        {self.sp1,false},
+        {self.sp1,false},
+        {self.sp1,false},
+        {self.sp1,true},
+    }
 end
 
-
-bg_sprites = {
-{32,true},
-{34,true},
-{34,true},
-{34,false},
-{32,false},
-{32,false},
-{32,false},
-{32,true},
-}
+function badguy:init()
+	self:make_legs()
+    self:make_s_list()
+end
 
 function badguy:update()
 	self.vel=0
@@ -1087,7 +1091,7 @@ function badguy:update()
 end
 
 function badguy:draw()
-	self:draw_humanoid(bg_sprites)
+	self:draw_humanoid(self.sprites)
 end
 
 function badguy:bump_me(other)
@@ -1190,21 +1194,24 @@ macer.dx=0
 macer.dy=0
 macer.spinspeed=1/90
 macer.sp=70
+macer.sp1=70
+macer.sp2=72
 
-mc_sprites = {
-{70,true},
-{72,true},
-{72,true},
-{72,false},
-{70,false},
-{70,false},
-{70,false},
-{70,true},
-}
+-- mc_sprites = {
+-- {70,true},
+-- {72,true},
+-- {72,true},
+-- {72,false},
+-- {70,false},
+-- {70,false},
+-- {70,false},
+-- {70,true},
+-- }
 
 function macer:init()
 	self:make_legs()
 	self:make_mace(3)
+    self:make_s_list()
 end
 
 function macer:make_mace(mace_count)
@@ -1221,7 +1228,7 @@ function macer:update()
 end
 
 function macer:draw()
-	self:draw_humanoid(mc_sprites)
+	self:draw_humanoid(self.sprites)
 end
 
 mace = actor:new()
@@ -1284,24 +1291,10 @@ end
 
 gunnerud = sentryud:new()
 gunnerud.sp = 76
+gunnerud.sp1 = 76
+gunnerud.sp2 = 78
 
-function gunnerud:init()
-	
-end
 
-function gunnerud:update_late()
-	if self.x > self.myzone.x0 + dx*.5 then
-		self.angle = 0.5
-		self.gunspeed = -1.5
-	else
-		self.angle = 0
-		self.gunspeed = 1.5
-	end
-	self.timer = (self.timer+1)%90
-	if self.timer == 60 then
-		self:make_explosion(self.x,self.y-0.25,self.z)
-	end
-end
 
 particle = actor:new()
 particle.timer=5
