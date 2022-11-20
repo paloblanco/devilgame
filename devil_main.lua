@@ -1308,15 +1308,31 @@ function gunnerud:update_late()
 	end
 end
 
+gunnerlr = sentrylr:new()
+gunnerlr.sp = 76
+gunnerlr.sp1 = 76
+gunnerlr.sp2 = 78
+gunnerlr.guntime=0
+
+function gunnerlr:update_late()
+	self.guntime=max(0,self.guntime-1)
+	if self.guntime==0 then
+		if abs(player.x-self.x)<.5 then
+			local bully = .05
+			if (player.y<self.y) bully *= -1
+			local bull = bullet:new({x=self.x,y=self.y,z=self.z,dy=bully})
+			bull:assign_zone(self.myzone)
+			self.guntime=60
+		end
+	end
+end
 
 bullet = actor:new()
 bullet.sp = 68
 bullet.shadow=true
 
 function bullet:update()
-	-- self.x += self.dx
-	-- self.y += self.dy
-	self.bumpwall=nil
+	-- self.bumpwall=nil
 	self:_move()
 	self:bounceoffwalls()
 	self:zone_check()
@@ -1646,6 +1662,7 @@ nmacer = 11
 nlaserv=12
 nlaserh=13
 ngunnerud=14
+ngunnerlr=15
 
 acreator={}
 acreator[nhero]=p1
@@ -1662,6 +1679,7 @@ acreator[nmacer] = macer
 acreator[nlaserv] = laserv
 acreator[nlaserh] = laserh
 acreator[ngunnerud] = gunnerud
+acreator[ngunnerlr] = gunnerlr
 
 mstart=0x2000
 
