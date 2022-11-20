@@ -1293,9 +1293,19 @@ gunnerud = sentryud:new()
 gunnerud.sp = 76
 gunnerud.sp1 = 76
 gunnerud.sp2 = 78
+gunnerud.guntime=0
 
 function gunnerud:update_late()
-	
+	self.guntime=max(0,self.guntime-1)
+	if self.guntime==0 then
+		if abs(player.y-self.y)<.5 then
+			local bullx = .05
+			if (player.x<self.x) bullx *= -1
+			local bull = bullet:new({x=self.x,y=self.y,z=self.z,dx=bullx})
+			bull:assign_zone(self.myzone)
+			self.guntime=60
+		end
+	end
 end
 
 
@@ -1304,9 +1314,10 @@ bullet.sp = 68
 bullet.shadow=true
 
 function bullet:update()
-	self.x += self.dx
-	self.y += self.dy
+	-- self.x += self.dx
+	-- self.y += self.dy
 	self.bumpwall=nil
+	self:_move()
 	self:bounceoffwalls()
 	self:zone_check()
 	if self.bumpwall then 
