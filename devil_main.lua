@@ -1294,7 +1294,30 @@ gunnerud.sp = 76
 gunnerud.sp1 = 76
 gunnerud.sp2 = 78
 
+function gunnerud:update_late()
+	
+end
 
+
+bullet = actor:new()
+bullet.sp = 68
+bullet.shadow=true
+
+function bullet:update()
+	self.x += self.dx
+	self.y += self.dy
+	self.bumpwall=nil
+	self:bounceoffwalls()
+	self:zone_check()
+	if self.bumpwall then 
+		self:make_explosion()
+		self:kill_me()
+	end
+end
+
+function bullet:bump_me(other)
+	other:hurt_me()
+end
 
 particle = actor:new()
 particle.timer=5
