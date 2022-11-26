@@ -1308,6 +1308,30 @@ function gunnerud:update_late()
 	end
 end
 
+gunners = gunnerud:new()
+gunners.dx=0
+gunners.dy=0
+
+function gunners:update()
+	self.angle = 0
+	if (player.x < self.x) self.angle=0.5
+	self.cycle+=0.5
+end
+
+
+gunnerh = gunners:new()
+
+function gunnerh:update_late()
+	self.timer = (self.timer-1)%120
+	if self.timer==0 then
+		local bullx = .05
+		if (player.x<self.x) bullx *= -1
+		local bull = bullet:new({x=self.x,y=self.y,z=self.z,dx=bullx})
+		bull:assign_zone(self.myzone)
+	end
+end
+
+
 gunnerlr = sentrylr:new()
 gunnerlr.sp = 76
 gunnerlr.sp1 = 76
@@ -1324,6 +1348,19 @@ function gunnerlr:update_late()
 			bull:assign_zone(self.myzone)
 			self.guntime=60
 		end
+	end
+end
+
+gunnerv = gunners:new()
+gunnerv.dy=0
+
+function gunnerv:update_late()
+	self.timer = (self.timer-1)%120
+	if self.timer==0 then
+		local bully = .05
+		if (player.y<self.y) bully *= -1
+		local bull = bullet:new({x=self.x,y=self.y,z=self.z,dy=bully})
+		bull:assign_zone(self.myzone)
 	end
 end
 
@@ -1663,6 +1700,8 @@ nlaserv=12
 nlaserh=13
 ngunnerud=14
 ngunnerlr=15
+ngunnerh=16
+ngunnerv=17
 
 acreator={}
 acreator[nhero]=p1
@@ -1680,6 +1719,8 @@ acreator[nlaserv] = laserv
 acreator[nlaserh] = laserh
 acreator[ngunnerud] = gunnerud
 acreator[ngunnerlr] = gunnerlr
+acreator[ngunnerh] = gunnerh
+acreator[ngunnerv] = gunnerv
 
 mstart=0x2000
 

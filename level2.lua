@@ -13,6 +13,8 @@ nlaserv=12
 nlaserh=13
 ngunnerud=14
 ngunnerlr=15
+ngunnerh=16
+ngunnerv=17
 
 function make_level2()
 level1 = {}
@@ -28,8 +30,10 @@ a1 = {
     {nmacer,4,4,0},
     {nlaserv,5,6,0},
     {nlaserh,0,6,2},
-    {ngunnerud,4,2,0},
-    {ngunnerlr,7,6,0},
+    -- {ngunnerud,4,2,0},
+    -- {ngunnerlr,7,6,0},
+    {ngunnerv,2,6,0},
+    {ngunnerv,10,6,0}
 }
 add(zone1,layout1)
 add(zone1,a1)
